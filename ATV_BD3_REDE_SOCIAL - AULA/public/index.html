@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VolleyNet - Rede Social de Vôlei</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="header_container">
+        <img src="./images/bola.png" alt="VolleyNet logo" />
+        <h1>VolleyNet</h1>
+    </div>
+
+    <div class="button_post_container">
+        <button name="btn_post" id="btn_post">Novo Post</button>
+    </div>
+
+    <div class="posts_container"></div>
+
+    <!-- Formulário Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="form_post_container">
+                <h4>Faça um post no VolleyNet</h4>
+                <form name="frm_post" id="frm_post">
+                    <input type="text" name="txt_titulo" id="txt_titulo" placeholder="Seu nome ou apelido" />
+                    <br />
+                    <textarea name="txt_post" id="txt_post" placeholder="Escreva sua mensagem..." rows="4"></textarea>
+                    <br />
+                    <button name="btn_postar" id="btn_postar">Postar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Código do modal (sem alteração)
+        let btn = document.getElementById("btn_post");
+        let modal = document.getElementById("myModal");
+        let span = document.getElementsByClassName("close")[0];
+
+        btn.addEventListener("click", function (event) {
+            event.preventDefault();
+            modal.style.display = "block";
+        });
+
+        span.addEventListener("click", function (event) {
+            modal.style.display = "none";
+        });
+
+        // Socket.io e renderização dos posts (sem alteração)
+        const socket = io();
+
+        socket.on("previousMessage", function (posts) {
+            posts.forEach(function (post) {
+                renderPost(post);
+            });
+        });
+
+        socket.on("receivedMessage", function (post) {
+            renderPost(post);
+        });
+
+        document.getElementById("frm_post").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const titulo = document.getElementById("txt_titulo").value;
+            const texto = document.getElementById("txt_post").value;
+
+            if (!titulo || !texto) return;
+
+            const post = {
+                author: titulo,
+                message: texto,
+            };
+
+            socket.emit("sendMessage", post);
+
+            document.getElementById("txt_titulo").value = "";
+            document.getElementById("txt_post").value = "";
+            modal.style.display = "none";
+        });
+
+        function renderPost(post) {
+            const container = document.querySelector(".posts_container");
+            const div = document.createElement("div");
+            div.classList.add("post_card");
+
+            div.innerHTML = `
+                <h3>${post.author}</h3>
+                <p>${post.message}</p>
+                <small>${new Date(post.timestamp).toLocaleString()}</small>
+            `;
+
+            container.prepend(div);
+        }
+    </script>
+</body>
+</html>
